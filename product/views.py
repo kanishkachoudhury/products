@@ -49,12 +49,20 @@ def create_product(request):
 
     
 @api_view(['PUT'])
-def update_product(request):
-    print('demo')
+def update_product(request, product_id):
+    category = get_object_or_404(Category, id=product_id)
+    product_serializer = ProductSerializer(category, data=request.data)
+    if product_serializer.is_valid():
+        product_serializer.save()
+        return Response(product_serializer.data, status=status.HTTP_200_OK)
+    return Response(product_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['DELETE'])
-def delete_product(request, category_id):
-    print('demo')
+def delete_product(request,product_id):
+    product = get_object_or_404(Product, id=product_id)
+    product.delete()
+    return Response({"message": "Product deleted successfully"}, status=status.HTTP_204_NO_CONTENT)
+
 
 @api_view(['GET'])
 def get_all_product(request):
@@ -62,8 +70,11 @@ def get_all_product(request):
     product_serializer = ProductSerializer(listProduct, many=True)
     return Response(data=product_serializer.data, status=status.HTTP_200_OK)
 
-    print('demo')
 
 @api_view(['GET'])
-def get_product_by_name(request):
-    print('demo')
+def get_product_by_name(request, name):
+    products = Product.objects.filter(name__icontains=name)
+    if products.exists():
+        product_serializer = ProductSerializer(products, many=True)
+        return Response(product_serializer.data, status=status.HTTP_200_OK)
+    return Response({"message": "No products found with the given name"}, status=status.HTTP_404_NOT_FOUND)
